@@ -55,7 +55,7 @@ def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
   OverwriteGlobalParameters(newGlobalParameters)
   return f(arg)
 
-def ParallelMap(function: Callable, objects: Any, message: str="", enable: bool=True, multiArg: bool=True):
+def ParallelMap(function: Callable, objects: Any, message: str="", enable: bool=False, multiArg: bool=True):
     """Executes a function over a list of objects in parallel or sequentially.
 
     This function is generally equivalent to ``list(map(function, objects))``. However, it provides
@@ -80,15 +80,21 @@ def ParallelMap(function: Callable, objects: Any, message: str="", enable: bool=
     from . import Utils
     threadCount = CPUThreadCount(enable)
     
-    if threadCount <= 1:
-      return list(map(lambda objs: function(*objs), Utils.tqdm(objects, desc=message)))
-        
     inputs = list(zip(objects, itertools.repeat(globalParameters)))
     message += f": {threadCount} threads, {len(inputs)} tasks"
+
+    if threadCount <= 1:
+
+        f = lambda x: function(*x) if multiArg else function(x)
+
+        rv = []
+        for obj in Utils.tqdm(objects, desc=message):
+            OverwriteGlobalParameters(globalParameters)
+            r = f(obj)
+            rv.append(r)
+        return rv
 
     pargs = Utils.tqdm(inputs, desc=message)
     pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
 
-    rv = Parallel(n_jobs=threadCount)(delayed(pcall)(function, a, params) for a, params in pargs)
-    
-    return rv
+    return Parallel(n_jobs=threadCount)(delayed(pcall)(function, a, params) for a, params in pargs)
