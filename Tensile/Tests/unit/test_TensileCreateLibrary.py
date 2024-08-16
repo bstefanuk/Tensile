@@ -813,7 +813,7 @@ def test_buildKernelSourceAndHeaderFiles_mergeWithNonEmptyAsm():
         contents = f.readlines()
         assert contents[-1] == "A1A3"
         print(contents[-2])
-        assert contents[-2] == "#include \"no-commit-kernel-build-files/Kernels.h\"\n"
+        assert contents[-2] == '#include "no-commit-kernel-build-files/Kernels.h"\n'
     with open(outputPath / "Kernels.h", "r") as f:
         contents = f.readlines()
         assert contents[-1] == "#pragma 1#pragma 3"
@@ -844,7 +844,6 @@ def test_buildKernelSourceAndHeaderFiles_noMerge_WithNonEmptyAsm():
 
 
 def test_buildKernelSourceAndHeaderFiles_lazyMerge3Src():
-    from pprint import pprint
 
     outputPath = Path("no-commit-kernel-build-files")
     outputPath.mkdir(exist_ok=True)
@@ -876,7 +875,6 @@ def test_buildKernelSourceAndHeaderFiles_lazyMerge3Src():
 
 
 def test_buildKernelSourceAndHeaderFiles_noLazyMerge3Src():
-    from pprint import pprint
 
     outputPath = Path("no-commit-kernel-build-files")
     outputPath.mkdir(exist_ok=True)

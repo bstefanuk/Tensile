@@ -80,6 +80,7 @@ def processKernelSource(kernel, kernelWriterSource, kernelWriterAssembly):
     """Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
+    # print("BIG FNAME:")
     try:
         kernelWriter = (
             kernelWriterSource if kernel["KernelLanguage"] == "Source" else kernelWriterAssembly
@@ -92,6 +93,10 @@ def processKernelSource(kernel, kernelWriterSource, kernelWriterAssembly):
         filename = kernel.get("codeObjectFile", None)
 
     except RuntimeError:
+        printWarning(
+            "Gracefully handling unknown runtime error when generating kernel: %s"
+            % kernel["KernelName"]
+        )
         return (1, "", "", kernelName, None)
 
     return (err, src, header, kernelName, filename)
@@ -481,7 +486,13 @@ def prepAsm(
 
 
 ################################################################################
-def buildKernelSourceAndHeaderFiles(results, outputPath):
+ProcKernResult = List[Tuple[int, str, str, str, Optional[str]]]
+
+
+# @profile
+def buildKernelSourceAndHeaderFiles(
+    results: ProcKernResult, outputPath, lazyLoading: bool, mergeFiles: bool, numMergedFiles: int
+):
     """
     Logs errors and writes appropriate info to kernelSourceFile and kernelHeaderFile.
 
@@ -502,6 +513,7 @@ def buildKernelSourceAndHeaderFiles(results, outputPath):
     filesToWrite = collections.defaultdict(list)
     validKernelCount = 0
     for err, src, header, kernelName, filename in results:
+        # print("RESULTS", results)
 
         # Keep track of kernels with errors
         if err:
@@ -513,19 +525,16 @@ def buildKernelSourceAndHeaderFiles(results, outputPath):
 
         kernelsToWrite.append((err, src, header, kernelName))
 
+        pathJoin = lambda x: os.path.join(os.path.normcase(outputPath), x)
+
         # Create list of files
         if filename:
-            filesToWrite[os.path.join(os.path.normcase(outputPath), filename)].append(
-                (err, src, header, kernelName)
-            )
-        elif globalParameters["MergeFiles"]:
+            filesToWrite[pathJoin(filename)].append((err, src, header, kernelName))
+        elif mergeFiles:
             kernelSuffix = ""
-            if globalParameters["NumMergedFiles"] > 1:
-                kernelSuffix = validKernelCount % globalParameters["NumMergedFiles"]
-
-            filesToWrite[
-                os.path.join(os.path.normcase(outputPath), "Kernels" + kernelSuffix)
-            ].append((err, src, header, kernelName))
+            if numMergedFiles > 1:
+                kernelSuffix = validKernelCount % numMergedFiles
+            filesToWrite[pathJoin("Kernels" + kernelSuffix)].append((err, src, header, kernelName))
         else:
             filesToWrite[os.path.join(os.path.normcase(outputPath), kernelName)].append(
                 (err, src, header, kernelName)
@@ -534,11 +543,9 @@ def buildKernelSourceAndHeaderFiles(results, outputPath):
         validKernelCount += 1
 
     # Ensure there's at least one kernel file for helper kernels
-    if globalParameters["LazyLibraryLoading"] or (
-        globalParameters["MergeFiles"] and not kernelsToWrite
-    ):
+    if lazyLoading or (mergeFiles and not kernelsToWrite):
         kernelSuffix = ""
-        if globalParameters["NumMergedFiles"] > 1:
+        if numMergedFiles > 1:
             kernelSuffix = "0"
 
         filesToWrite[os.path.join(os.path.normcase(outputPath), "Kernels" + kernelSuffix)] = []
@@ -751,6 +758,7 @@ def writeKernelHelpers(
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
+@profile
 def writeKernels(
     outputPath: str,
     cxxCompiler: str,
@@ -785,6 +793,7 @@ def writeKernels(
     prepAsm(
         kernelWriterAssembly,
         os.name != "nt",
+        # Use globalParameters here, not params
         Path(globalParameters["WorkingPath"]),
         globalParameters["CurrentISA"],
         params["PrintLevel"],
@@ -797,10 +806,17 @@ def writeKernels(
         itertools.repeat(kernelWriterSource),
         itertools.repeat(kernelWriterAssembly),
     )
-    results = Common.ParallelMap(processKernelSource, kIter, "Generating kernels")
+    results = Common.ParallelMap(processKernelSource, list(kIter), "Generating kernels")
+
     filterProcessingErrors(kernels, solutions, results, params["PrintLevel"], errorTolerant)
 
-    kernelFiles, kernelsWithBuildErrors = buildKernelSourceAndHeaderFiles(results, outputPath)
+    kernelFiles, kernelsWithBuildErrors = buildKernelSourceAndHeaderFiles(
+        results,
+        outputPath,
+        params["LazyLibraryLoading"],
+        params["MergeFiles"],
+        params["NumMergedFiles"],
+    )
 
     writerSelector = lambda lang: kernelWriterAssembly if lang == "Assembly" else kernelWriterSource
     kernelsToBuild = filterBuildErrors(
@@ -1528,6 +1544,9 @@ def sanityCheck(
     libPaths = set([Path(p).resolve() for p in srcLibPaths + asmLibPaths])
     coPaths = set([Path(p).resolve() for p in codeObjectPaths])
 
+    tPrint(2, "Library paths:\n    " + "\n    ".join(map(str, libPaths)))
+    tPrint(2, "Code object paths:\n    " + "\n    ".join(map(str, coPaths)))
+
     extraCodeObjects = coPaths - libPaths
     if extraCodeObjects:
         raise ValueError(
@@ -1654,7 +1673,7 @@ def writeMasterFile(
 ################################################################################
 # Tensile Create Library
 ################################################################################
-@profile
+# @profile
 def TensileCreateLibrary():
 
     tPrint(3, "Arguments: %s" % sys.argv)
