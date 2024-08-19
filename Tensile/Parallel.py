@@ -54,7 +54,7 @@ def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
   OverwriteGlobalParameters(newGlobalParameters)
   return f(arg)
 
-def ParallelMap(function: Callable, objects: Any, message: str="", enable: bool=True, multiArg: bool=True):
+def ParallelMap(function: Callable, objects: Any, message: str="", enable: bool=False, multiArg: bool=True):
     """Executes a function over a list of objects in parallel or sequentially.
 
     This function is generally equivalent to ``list(map(function, objects))``. However, it provides

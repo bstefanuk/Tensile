@@ -48,11 +48,11 @@ class ProgressBar:
         createTime: The timestamp when the progress bar was created.
         message: The message displayed alongside the progress bar.
     """
-    def __init__(self, maxValue: int, desc: str, width=25):
+    def __init__(self, maxValue: int, desc: str, width=60):
         self.char: str = '.'
         self.maxValue: int = maxValue
         self.width: int = width
-        self.maxTicks: int = self.width - 10  # Adjusted for better alignment
+        self.maxTicks: int = self.width  # Adjusted for better alignment
 
         self.priorValue: int = 0
         self.fraction: float = 0

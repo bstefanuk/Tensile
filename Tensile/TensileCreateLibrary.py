@@ -80,7 +80,6 @@ def processKernelSource(kernel, kernelWriterSource, kernelWriterAssembly):
     """Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
-    # print("BIG FNAME:")
     try:
         kernelWriter = (
             kernelWriterSource if kernel["KernelLanguage"] == "Source" else kernelWriterAssembly
@@ -292,7 +291,9 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile, removeTempora
         tPrint(2, "hipcc:" + " ".join(compileArgs))
         # change to use  check_output to force windows cmd block util command finish
         try:
+            print("Build object file command: ", compileArgs)
             out = subprocess.check_output(compileArgs, stderr=subprocess.STDOUT)
+            exit(1)
             tPrint(3, out)
         except subprocess.CalledProcessError as err:
             print(err.output)
@@ -758,7 +759,7 @@ def writeKernelHelpers(
 ################################################################################
 # Write Solutions and Kernels for BenchmarkClient or LibraryClient
 ################################################################################
-@profile
+#@profile
 def writeKernels(
     outputPath: str,
     cxxCompiler: str,
@@ -1673,7 +1674,7 @@ def writeMasterFile(
 ################################################################################
 # Tensile Create Library
 ################################################################################
-# @profile
+@profile
 def TensileCreateLibrary():
 
     tPrint(3, "Arguments: %s" % sys.argv)

@@ -31,6 +31,7 @@ import sys
 import argparse
 from .Common import globalParameters, tPrint, printExit, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR, gfxArch
+from .Utilities.Profile import profile
 from . import BenchmarkProblems
 from . import ClientExecutable
 from . import ClientWriter
@@ -185,6 +186,7 @@ def argUpdatedGlobalParameters(args):
 # Tensile
 # - below entry points call here
 ################################################################################
+# @profile
 def Tensile(userArgs):
     global globalParameters
 

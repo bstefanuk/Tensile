@@ -30,6 +30,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Callable, Tuple
 
+from ..Common import tPrint
+
 PROFILE_ENV_VAR = "TENSILE_PROFILE"
 
 def profile(func: Callable) -> Callable:
@@ -41,6 +43,7 @@ def profile(func: Callable) -> Callable:
     if not envVariableIsSet(PROFILE_ENV_VAR):
         return func
     def wrapper(*args, **kwargs):
+        tPrint(1, f"> Profiling {func.__name__}")
         path, filename = initProfileArtifacts(func.__name__)
 
         prof = cProfile.Profile()
@@ -48,8 +51,8 @@ def profile(func: Callable) -> Callable:
         result = pstats.Stats(prof)
         result.sort_stats(pstats.SortKey.TIME)
         result.dump_stats(path/filename)
-
         return output
+
     return wrapper
 
 def envVariableIsSet(varName: str) -> bool:
