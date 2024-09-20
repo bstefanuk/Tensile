@@ -3904,13 +3904,13 @@ class Solution(collections.abc.Mapping):
                    problemType["IndexAssignments%s"%tc][pos], tc))
 
       for p in state["AssertStride%sEqual"%tc].keys():
-        if p>len(problemType["IndexAssignments%s"%tc]):
+        if int(p)>len(problemType["IndexAssignments%s"%tc]):
           raise RuntimeError ("AssertStride%sEqual index position %d is > len(IndexAssignments%s)" % \
                                 tc, p, tc)
 
     maxIndex = max(problemType["IndexAssignmentsA"] + problemType["IndexAssignmentsB"])
     for p in state["AssertSizeEqual"]:
-      if p>maxIndex:
+      if int(p)>maxIndex:
         raise RuntimeError ("AssertSize index position=%d is > maxIndex=%d" % (p, maxIndex))
 
 
@@ -4920,7 +4920,7 @@ class Solution(collections.abc.Mapping):
           abbrev += "_"
       return abbrev
     elif isinstance(value, dict):
-      s =  "_".join(["%d%d"%(pos,k) for pos,k in value.items()])
+      s =  "_".join(["%d%d"%(int(pos),int(k)) for pos,k in value.items()])
       return s
     elif isinstance(value, float):
       val1 = int(value)

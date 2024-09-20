@@ -1499,7 +1499,8 @@ def findLogicFiles(
     isMatch = lambda file: any((arch in file.stem for arch in logicArchs.union(extraMatchers)))
     isExperimental = lambda path: not experimentalDir in str(path)
 
-    extensions = ["*.yaml", "*.yml"]
+    extensions = ["*.json"]
+    # extensions = ["*.yaml", "*.yml"]
     logicFiles = filter(isMatch, (file for ext in extensions for file in path.rglob(ext)))
     if not lazyLoading:
         if not experimentalDir:

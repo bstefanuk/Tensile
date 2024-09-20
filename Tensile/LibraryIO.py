@@ -30,6 +30,7 @@ from . import SolutionLibrary
 from .Utilities.ConditionalImports import yamlLoader, yamlDumper
 
 from typing import NamedTuple
+import simdjson
 
 try:
     import yaml
@@ -116,12 +117,16 @@ def writeSolutions(filename, problemSizes, solutions, cache=False):
 ###############################
 # Reading and parsing functions
 ###############################
-def readYAML(filename):
+def readYAML2(filename):
     """Reads and returns YAML data from file."""
     with open(filename, "r") as f:
         data = yaml.load(f, yamlLoader)
     return data
 
+def readYAML(filename: str):
+    with open(filename, "r") as f:
+        data = simdjson.load(f)
+    return data
 
 def parseSolutionsFile(filename):
     """Wrapper function to read and parse a solutions file."""
