@@ -2318,7 +2318,7 @@ def which(p):
             candidate = os.path.join(os.path.expanduser(dirname), exe)
             if os.path.isfile(candidate):
                 return candidate
-    return None
+    raise ValueError(f"Could not find {p} in PATH or ROCmBinPath.")
 
 
 def splitArchs():
