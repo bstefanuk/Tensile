@@ -2313,6 +2313,7 @@ def which(p):
     else:
         exes = [p+x for x in ['', '.exe', '.bat']]
     system_path = os.environ['PATH'].split(os.pathsep)
+    system_path += os.environ['HIP_PATH'].split(os.pathsep)
     for dirname in system_path+[globalParameters["ROCmBinPath"]]:
         for exe in exes:
             candidate = os.path.join(os.path.expanduser(dirname), exe)
